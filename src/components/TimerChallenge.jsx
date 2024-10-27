@@ -4,20 +4,27 @@ import ResultModal from "./ResultModal.jsx";
 export default function TimerChallenge({ title, targetTime }) {
     let timer = useRef();
     let dialog = useRef();
-    const [ timerExpired, setTimerExpired ] = useState(false);
-    const [ timerStarted, setTimerStarted ] = useState(false);
-    function handleStart() {
-        timer.current = setTimeout(() => {
-            setTimerExpired(true)
-            dialog.current.open();
-        }, 1000 * targetTime);
+    const [ timeRemaining, setTimeRemaining] = useState(targetTime * 1000);
 
-        setTimerStarted(true);
+    const timerIsActive = timeRemaining > 0 && timeRemaining < targetTime  * 1000;
+
+    if (timeRemaining <= 0) {
+        clearInterval(timer.current);
+        setTimeRemaining(targetTime * 1000);
+        dialog.current.open();
+    }
+
+    function handleStart() {
+        timer.current = setInterval(() => {
+            setTimeRemaining(prevTimeRemaining => {
+                return prevTimeRemaining - 10;
+            });
+        }, 10);
     }
 
     function handleStop() {
-        clearTimeout(timer.current);
-        setTimerStarted(false);
+        clearInterval(timer.current);
+        dialog.current.open();
     }
 
     return (
@@ -25,17 +32,16 @@ export default function TimerChallenge({ title, targetTime }) {
             <ResultModal ref={dialog} targetTime={targetTime} result="lost"/>
             <section className="challenge">
                 <h2>{title}</h2>
-                {timerExpired && <p>You lost!</p>}
                 <p className="challenge-time">
                     {targetTime} second{targetTime > 1 ? 's' : ''}
                 </p>
                 <p>
-                    <button onClick={timerStarted ? handleStop :  handleStart}>
-                        {timerStarted ? 'Stop Challenge' : 'Start Challenge'}
+                    <button onClick={timerIsActive ? handleStop :  handleStart}>
+                        {timerIsActive ? 'Stop Challenge' : 'Start Challenge'}
                     </button>
                 </p>
-                <p className={timerStarted ? 'active' : ''}>
-                    {timerStarted ? 'Time is running' : 'Timer inactive'}
+                <p className={timerIsActive ? 'active' : ''}>
+                    {timerIsActive ? 'Time is running' : 'Timer inactive'}
                 </p>
             </section>
         </>
